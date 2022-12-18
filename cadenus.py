@@ -12,7 +12,6 @@ def clean_text(original: str) -> str:
   return original.replace(" ", "").replace("\n", "")
 
 def roll_column(rows: List[str], column_number: int, no_of_steps: int):
-  print("STEPS",no_of_steps)
   temp = deepcopy(rows)
   for row_number in range(25):
     rows[row_number][column_number] = temp[(row_number - no_of_steps) % 25][column_number]
@@ -34,7 +33,12 @@ def transpose(original:str, permutation: List[int]) -> str:
       result += original[target]
   return result
 
-
+def inverse_permutation(key: str) -> List[int]:
+  forward_permutation = create_permutation(key)
+  inverse = []
+  for i in range(len(forward_permutation)):
+    inverse.append(forward_permutation.index(i+1)+1)
+  return inverse
 
 def encrypt(plain_text: str, key: str) -> str:
   plain_text = clean_text(plain_text)
@@ -64,6 +68,34 @@ def encrypt(plain_text: str, key: str) -> str:
       ciphertext += transpose("".join(row), permuatation)
   return ciphertext
 
+def decrypt(ciphertext: str, key: str) -> str:
+  key = remove_repeated_letters(key)
+  ciphertext_len = len(ciphertext)
+  key_len = len(key)
+  block_size = key_len * 25
+  number_of_blocks = ciphertext_len // block_size
+
+  plain_text = ""
+  for block in range(number_of_blocks):
+    block = ciphertext[block * block_size: (block+1) * block_size]
+
+    i = 0
+    rows = []
+    while i < block_size:
+      rows.append(list(block[i:i+key_len]))
+      i+=key_len
+
+    permuatation = inverse_permutation(key)
+    for row_number in range(25):
+      rows[row_number] = list(transpose(rows[row_number], permuatation))
+
+    for column_number in range(key_len):
+      no_of_steps = ord(key[column_number]) - ord('A')
+      roll_column(rows, column_number, -no_of_steps)
+
+    for row in rows:
+      plain_text += "".join(row)
+  return plain_text
 
 plain_text = """TO BE OR NOT TO BE THAT IS THE QUESTION WHETHER TIS NOBLER
 IN THE MIND TO SUFFER THE SLINGS AND ARROWS OF OUTRAGEOUS
@@ -77,3 +109,4 @@ WUTEVUH"""
 key = "ORATIO"
 
 print(encrypt(plain_text, key))
+print(decrypt("DARHNAIIRTNRAEIWEDTLOAWANJSERHHAHTNIACUIRPUHWIYVTBITSEESWAIEVOBODMGACNIRSHRPEFIESRSXHFOFESHHDNXDSEENCIHADNAGESTSAOSWELAMSCDFN", "HEART"))
